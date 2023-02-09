@@ -7,6 +7,7 @@ import {getInput, Options} from './options'
 export async function process(
   context: Context,
   isValid = validate
+  // testing
 ): Promise<void> {
   if (context.eventName !== 'pull_request') {
     core.debug('Not a pull request')
