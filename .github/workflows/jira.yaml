@@ -1,4 +1,4 @@
-name: JIRA Connection
+name: Jira PR Check
 on:
   pull_request:
     types:
@@ -16,8 +16,6 @@ jobs:
         id: check
         uses: ./
         with:
-          ignore-author: dependabot[bot],supplypiker
-          project: 'SRENEW'
+          ignore-author: dependabot[bot]
+          jira-project: "SRENEW"
           jira-host: ${{ secrets.JIRA_HOST }}
-          jira-email: ${{ secrets.JIRA_EMAIL }}
-          jira-api-token: ${{ secrets.JIRA_API_TOKEN }}
