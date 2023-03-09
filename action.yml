@@ -1,3 +1,39 @@
+# name: "jira-pr-link-enforcer"
+# description: "ensures PRs have an associated Jira tickets"
+# author: "blucas-aumni"
+# inputs:
+#   jira-host:
+#     description: "JIRA Domain"
+#     required: true
+#   jira-project:
+#     description: "JIRA Project"
+#     required: true
+# runs:
+#   using: "shell"
+#   steps:
+#     - run: |
+#         # Search for Jira links in PR body
+#         JIRA_REGEX="(https?:\/\/${{ inputs.jira-host }}\/browse\/${{ inputs.jira-project }}-[0-9]+)"
+#         BODY=$(jq -r '.pull_request.body // ""' "$GITHUB_EVENT_PATH")
+#         if [[ $BODY =~ $JIRA_REGEX ]]; then
+#           echo "Found Jira link in PR body: ${BASH_REMATCH[0]}"
+#         else
+#           # Search for Jira links in PR comments
+#           COMMENTS=$(curl -s -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" "$(jq -r '.pull_request.comments_url' "$GITHUB_EVENT_PATH")" | jq -r '.[].url')
+#           while read -r COMMENT_URL; do
+#             COMMENT_BODY=$(curl -s -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" "$COMMENT_URL" | jq -r '.body // ""')
+#             if [[ $COMMENT_BODY =~ $JIRA_REGEX ]]; then
+#               echo "Found Jira link in PR comment: ${BASH_REMATCH[0]}"
+#               break
+#             fi
+#           done <<< "$COMMENTS"
+#         fi
+
+#         if [[ ! $BASH_REMATCH ]]; then
+#           echo "No Jira Link Found"
+#           exit 1
+#         fi
+
 name: "jira-pr-link-enforcer"
 description: "ensures PRs have an associated Jira tickets"
 author: "blucas-aumni"
@@ -15,21 +51,21 @@ runs:
         # Search for Jira links in PR body
         JIRA_REGEX="(https?:\/\/${{ inputs.jira-host }}\/browse\/${{ inputs.jira-project }}-[0-9]+)"
         BODY=$(jq -r '.pull_request.body // ""' "$GITHUB_EVENT_PATH")
-        if [[ $BODY =~ $JIRA_REGEX ]]; then
-          echo "Found Jira link in PR body: ${BASH_REMATCH[0]}"
+        if echo "$BODY" | grep -qE "$JIRA_REGEX"; then
+          echo "Found Jira link in PR body: $(echo "$BODY" | grep -oE "$JIRA_REGEX")"
         else
           # Search for Jira links in PR comments
-          COMMENTS=$(curl -s -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" "$(jq -r '.pull_request.comments_url' "$GITHUB_EVENT_PATH")" | jq -r '.[].url')
-          while read -r COMMENT_URL; do
-            COMMENT_BODY=$(curl -s -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" "$COMMENT_URL" | jq -r '.body // ""')
-            if [[ $COMMENT_BODY =~ $JIRA_REGEX ]]; then
-              echo "Found Jira link in PR comment: ${BASH_REMATCH[0]}"
+          COMMENTS=$(curl -sS -H "Authorization: Bearer ${{ github.token }}" "$(jq -r '.pull_request.comments_url' "$GITHUB_EVENT_PATH")" | jq -r '.[].url')
+          if [ -z "$COMMENTS" ]; then
+            echo "No comments found"
+            exit 1
+          fi
+          for COMMENT_URL in $COMMENTS; do
+            COMMENT_BODY=$(curl -sS -H "Authorization: Bearer ${{ github.token }}" "$COMMENT_URL" | jq -r '.body // ""')
+            if echo "$COMMENT_BODY" | grep -qE "$JIRA_REGEX"; then
+              echo "Found Jira link in PR comment: $(echo "$COMMENT_BODY" | grep -oE "$JIRA_REGEX")"
               break
             fi
-          done <<< "$COMMENTS"
+          done
         fi
-
-        if [[ ! $BASH_REMATCH ]]; then
-          echo "No Jira Link Found"
-          exit 1
-        fi
+      shell: bash
