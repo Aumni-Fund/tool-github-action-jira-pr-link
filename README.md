@@ -14,12 +14,12 @@ on:
 jobs:
   enforce-issue:
     runs-on: ubuntu-latest
-    name: JIRA Association
+    name: JIRA Link Enforcer
     steps:
-      - name: Check for JIRA ISSUE
+      - name: Check for JIRA Link
         id: check
         uses: aumni-fund/tool-github-action-jira-pr-link@v1
         with:
-          ignore-author: dependabot[bot]
-          project: 'DEV'
+          jira-project: "DEV"
+          jira-host: "company.atlassian.net"
 ```
