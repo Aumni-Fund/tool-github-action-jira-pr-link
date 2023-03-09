@@ -6,6 +6,11 @@ on:
       - reopened
       - edited
       - synchronize
+  issue_comment:
+    types:
+      - opened
+      - edited
+      - deleted
 jobs:
   enforce-issue:
     runs-on: ubuntu-latest
