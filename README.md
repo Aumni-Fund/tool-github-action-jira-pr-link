@@ -10,6 +10,11 @@ on:
       - reopened
       - edited
       - synchronize
+  issue_comment:
+    types:
+      - created
+      - edited
+      - deleted
 
 jobs:
   enforce-issue:
